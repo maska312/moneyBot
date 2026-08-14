@@ -12,6 +12,9 @@ export interface ParsedExpense {
 
 export const FALLBACK_CATEGORIES = DEFAULT_CATEGORIES.map((c) => c.name);
 
+// Newest, lowest-cost high-throughput multimodal Gemini model
+export const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+
 /**
  * Fallback deterministic rule-based parser for fast response or when offline
  */
@@ -73,17 +76,16 @@ export function parseExpenseRegexFallback(text: string, categoriesList = FALLBAC
 }
 
 /**
- * Call Google Gemini 2.5 Flash API directly using fetch or @google/genai
+ * Call Google Gemini API (gemini-3.5-flash-lite / gemini-3.6-flash)
  */
-async function callGemini(contents: any[]): Promise<ParsedExpense> {
+async function callGemini(contents: any[], modelName = DEFAULT_GEMINI_MODEL): Promise<ParsedExpense> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not set");
   }
 
-  // Using Google Gemini generateContent REST API
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -107,6 +109,11 @@ async function callGemini(contents: any[]): Promise<ParsedExpense> {
 
   if (!response.ok) {
     const errorText = await response.text();
+    // If model wasn't found, try fallback model gemini-3.6-flash
+    if (response.status === 404 && modelName !== "gemini-3.6-flash") {
+      console.warn(`Model ${modelName} returned 404, falling back to gemini-3.6-flash`);
+      return callGemini(contents, "gemini-3.6-flash");
+    }
     throw new Error(`Gemini API error ${response.status}: ${errorText}`);
   }
 
@@ -128,7 +135,7 @@ async function callGemini(contents: any[]): Promise<ParsedExpense> {
 }
 
 /**
- * Parse text input with Gemini 2.5 Flash (fallback to regex if key missing or on error)
+ * Parse text input with Gemini 3.5 Flash Lite (fallback to regex if key missing or on error)
  */
 export async function parseExpenseText(text: string, categories = FALLBACK_CATEGORIES): Promise<ParsedExpense> {
   if (!process.env.GEMINI_API_KEY) {
@@ -148,17 +155,20 @@ export async function parseExpenseText(text: string, categories = FALLBACK_CATEG
  */
 export async function parseExpenseAudio(
   audioBase64: string,
-  mimeType = "audio/ogg; codecs=opus",
+  mimeType = "audio/ogg",
   categories = FALLBACK_CATEGORIES
 ): Promise<ParsedExpense> {
   if (!process.env.GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY is required to transcribe and parse audio messages");
   }
 
+  // Telegram voice notes use audio/ogg or audio/ogg; codecs=opus
+  const cleanMime = mimeType.split(";")[0].trim() || "audio/ogg";
+
   return await callGemini([
     {
       inlineData: {
-        mimeType,
+        mimeType: cleanMime,
         data: audioBase64,
       },
     },
@@ -180,10 +190,12 @@ export async function parseExpenseImage(
     throw new Error("GEMINI_API_KEY is required to process receipt photos");
   }
 
+  const cleanMime = mimeType.split(";")[0].trim() || "image/jpeg";
+
   return await callGemini([
     {
       inlineData: {
-        mimeType,
+        mimeType: cleanMime,
         data: imageBase64,
       },
     },
