@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, transactions, users, categories } from "@/lib/db";
-import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
+import { eq, desc, and, gte, lte } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const monthYear = searchParams.get("monthYear") || new Date().toISOString().slice(0, 7); // e.g. "2026-08"
-    const userId = searchParams.get("userId");
+    const userId = searchParams.get("userId"); // "all" | "Максат" | "Баяна" | UUID
     const categoryId = searchParams.get("categoryId");
 
     const startDate = new Date(`${monthYear}-01T00:00:00.000Z`);
-    // End of month
     const [year, month] = monthYear.split("-").map(Number);
     const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
 
@@ -20,7 +19,12 @@ export async function GET(req: NextRequest) {
     ];
 
     if (userId && userId !== "all") {
-      conditions.push(eq(transactions.userId, userId));
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+      if (isUuid) {
+        conditions.push(eq(transactions.userId, userId));
+      } else {
+        conditions.push(eq(users.name, userId));
+      }
     }
 
     if (categoryId && categoryId !== "all") {

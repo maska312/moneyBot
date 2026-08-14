@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const monthYear = searchParams.get("monthYear") || new Date().toISOString().slice(0, 7); // "2026-08"
-    const selectedUserId = searchParams.get("userId"); // "all" | specific userId
+    const selectedUserId = searchParams.get("userId"); // "all" | "Максат" | "Баяна" | UUID
 
     const [year, month] = monthYear.split("-").map(Number);
     const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
@@ -19,7 +19,13 @@ export async function GET(req: NextRequest) {
     ];
 
     if (selectedUserId && selectedUserId !== "all") {
-      conditions.push(eq(transactions.userId, selectedUserId));
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(selectedUserId);
+      if (isUuid) {
+        conditions.push(eq(transactions.userId, selectedUserId));
+      } else {
+        // Filter by user name (e.g. "Максат" or "Баяна")
+        conditions.push(eq(users.name, selectedUserId));
+      }
     }
 
     // 1. Fetch all month transactions with joined tables

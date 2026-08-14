@@ -57,6 +57,13 @@ export default function DashboardPage() {
       if (catData.categories) {
         setCategories(catData.categories);
       }
+
+      // 4. Fetch Users
+      const usersRes = await fetch(`/api/users`);
+      const usersData = await usersRes.json();
+      if (usersData.users && usersData.users.length > 0) {
+        setUsers(usersData.users);
+      }
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     } finally {
