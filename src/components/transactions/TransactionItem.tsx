@@ -43,15 +43,35 @@ export function TransactionItem({
   const getSourceIcon = (src: string) => {
     switch (src) {
       case "telegram_voice":
-        return <Mic className="w-3 h-3 text-purple-400" title="Голосовое сообщение" />;
+        return (
+          <span title="Голосовое сообщение">
+            <Mic className="w-3 h-3 text-purple-400" />
+          </span>
+        );
       case "telegram_photo":
-        return <Camera className="w-3 h-3 text-blue-400" title="Фото чека" />;
+        return (
+          <span title="Фото чека">
+            <Camera className="w-3 h-3 text-blue-400" />
+          </span>
+        );
       case "telegram_text":
-        return <MessageSquare className="w-3 h-3 text-sky-400" title="Telegram бот" />;
+        return (
+          <span title="Telegram бот">
+            <MessageSquare className="w-3 h-3 text-sky-400" />
+          </span>
+        );
       case "ios_shortcut":
-        return <Smartphone className="w-3 h-3 text-amber-400" title="iOS Команда" />;
+        return (
+          <span title="iOS Команда">
+            <Smartphone className="w-3 h-3 text-amber-400" />
+          </span>
+        );
       default:
-        return <Globe className="w-3 h-3 text-emerald-400" title="Веб-сайт" />;
+        return (
+          <span title="Веб-сайт">
+            <Globe className="w-3 h-3 text-emerald-400" />
+          </span>
+        );
     }
   };
 

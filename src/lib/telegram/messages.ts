@@ -8,7 +8,9 @@ export function formatExpenseRecordedMessage(params: {
 }): string {
   const icon = params.categoryIcon || "🏷️";
   const curr = params.currency || "сом";
-  const formattedAmount = new Intl.NumberFormat("ru-RU").format(params.amount);
+  const formattedAmount = new Intl.NumberFormat("ru-RU")
+    .format(params.amount)
+    .replace(/\u00A0/g, " ");
 
   return [
     `✅ <b>Записан расход: ${formattedAmount} ${curr}</b>`,
@@ -22,7 +24,9 @@ export function formatExpenseRecordedMessage(params: {
 }
 
 export function formatExpenseCancelledMessage(amount: number, description?: string): string {
-  const formattedAmount = new Intl.NumberFormat("ru-RU").format(amount);
+  const formattedAmount = new Intl.NumberFormat("ru-RU")
+    .format(amount)
+    .replace(/\u00A0/g, " ");
   return `❌ <b>Расход отменен: ${formattedAmount} сом</b>${description ? ` (${description})` : ""}`;
 }
 
@@ -33,9 +37,15 @@ export function formatMonthlySummaryMessage(params: {
   bayanaAmount: number;
   topCategories: { name: string; icon: string; amount: number }[];
 }): string {
-  const total = new Intl.NumberFormat("ru-RU").format(params.totalAmount);
-  const maksat = new Intl.NumberFormat("ru-RU").format(params.maksatAmount);
-  const bayana = new Intl.NumberFormat("ru-RU").format(params.bayanaAmount);
+  const total = new Intl.NumberFormat("ru-RU")
+    .format(params.totalAmount)
+    .replace(/\u00A0/g, " ");
+  const maksat = new Intl.NumberFormat("ru-RU")
+    .format(params.maksatAmount)
+    .replace(/\u00A0/g, " ");
+  const bayana = new Intl.NumberFormat("ru-RU")
+    .format(params.bayanaAmount)
+    .replace(/\u00A0/g, " ");
 
   let msg = `📊 <b>Семейный бюджет за ${params.monthYear}</b>\n\n`;
   msg += `💰 <b>Всего расходов:</b> ${total} сом\n`;
@@ -45,7 +55,9 @@ export function formatMonthlySummaryMessage(params: {
   if (params.topCategories.length > 0) {
     msg += `<b>Топ категорий:</b>\n`;
     for (const cat of params.topCategories) {
-      const catAmount = new Intl.NumberFormat("ru-RU").format(cat.amount);
+      const catAmount = new Intl.NumberFormat("ru-RU")
+        .format(cat.amount)
+        .replace(/\u00A0/g, " ");
       msg += `${cat.icon} ${cat.name}: <b>${catAmount} сом</b>\n`;
     }
   }
